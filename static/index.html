@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8" />
+  <title>Visualizador de JSON</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    pre { background:#f4f4f4; padding:12px; border-radius:6px; }
+    .meta { color: #666; font-size: 0.9rem; margin-bottom: 8px; }
+  </style>
+</head>
+<body>
+  <h1>Último JSON recebido</h1>
+  <div id="meta" class="meta">Aguardando dados...</div>
+  <div id="resultado">
+    <pre id="jsonArea">Nenhum dado ainda.</pre>
+  </div>
+
+    <script>
+    // URL base do backend (altere se rodar em outro host/porta)
+    const baseUrl = "https://projeto-eren.onrender.com" // se backend estiver mesmo host
+    // const baseUrl = "http://seu-ip-ou-dominio:5000"; // se precisar de host/porta explicitamente
+
+    async function fetchLatest() {
+      try {
+        const res = await fetch(baseUrl + "/latest", { cache: "no-store" });
+        if (!res.ok) throw new Error("Erro ao buscar /latest: " + res.status);
+        const json = await res.json();
+
+        const jsonArea = document.getElementById("jsonArea");
+        const meta = document.getElementById("meta");
+
+        if (!json.dados) {
+          jsonArea.textContent = "Nenhum dado recebido ainda.";
+          meta.textContent = "Último recebimento: —";
+          return;
+        }
+
+        // Exibe o JSON formatado
+        jsonArea.textContent = JSON.stringify(json.dados, null, 2);
+
+        // Mostra a hora do recebimento (local)
+        const ts = json.received_at ? new Date(json.received_at * 1000) : null;
+        meta.textContent = ts ? "Último recebimento: " + ts.toLocaleString() : "Último recebimento: —";
+      } catch (err) {
+        document.getElementById("jsonArea").textContent = "Erro ao buscar dados: " + err;
+        document.getElementById("meta").textContent = "Erro";
+        console.error(err);
+      }
+    }
+
+    // Polling: checa a cada 2 segundos
+    fetchLatest();
+    setInterval(fetchLatest, 2000);
+  </script>
+
+</body>
+</html>
